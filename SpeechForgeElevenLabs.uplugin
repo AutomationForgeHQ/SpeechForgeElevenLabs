@@ -1,0 +1,35 @@
+{
+  "FileVersion": 3,
+  "Version": 1,
+  "VersionName": "0.1.0",
+  "FriendlyName": "SpeechForge ElevenLabs",
+  "Description": "Adds ElevenLabs to SpeechForge as a speech provider: character-level timings on every generation, inline direction on the expressive model, and free re-fetch of past takes from the account history. Add-on only: removing it changes nothing about SpeechForge.",
+  "Category": "Automation Forge",
+  "CreatedBy": "Bojan Andrejek",
+  "CreatedByURL": "https://kovati.dev",
+  "DocsURL": "https://github.com/AutomationForgeHQ/SpeechForgeElevenLabs",
+  "MarketplaceURL": "",
+  "SupportURL": "https://github.com/AutomationForgeHQ/SpeechForgeElevenLabs/issues",
+  "EditorOnly": true,
+  "CanContainContent": false,
+  "IsBetaVersion": true,
+  "IsExperimentalVersion": false,
+  "Installed": false,
+  "Modules": [
+    {
+      "Name": "SpeechForgeElevenLabs",
+      "Type": "Editor",
+      "LoadingPhase": "PostEngineInit",
+      "TargetAllowList": [
+        "Editor"
+      ]
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "SpeechForge",
+      "Enabled": true,
+      "Comment": "The pipeline this registers a provider with. Nothing here works without it."
+    }
+  ]
+}

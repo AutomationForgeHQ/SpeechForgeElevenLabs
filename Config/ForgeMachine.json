@@ -1,0 +1,16 @@
+{
+	"_comment": "What this plugin needs from the machine rather than from a project. Read by the Automation Forge hub; the vault entry is what makes the hub and the editor address one row rather than two. The id and vaultEntry predate the extraction from SpeechForge and keep their old names on purpose - they are looked up rather than displayed, and renaming them would be a migration for no gain.",
+
+	"keys": [
+		{
+			"id": "SpeechForge.ElevenLabs",
+			"displayName": "ElevenLabs",
+			"owner": "SpeechForgeElevenLabs",
+			"purpose": "Voice generation through ElevenLabs. Your own account - we never resell speech.",
+			"optional": false,
+			"helpUrl": "https://elevenlabs.io/app/settings/api-keys",
+			"vaultEntry": "SpeechForge/ElevenLabs",
+			"environmentVariable": "SPEECHFORGE_ELEVENLABS_KEY"
+		}
+	]
+}

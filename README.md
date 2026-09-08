@@ -1,6 +1,6 @@
 # SpeechForge ElevenLabs
 
-Adds ElevenLabs to [SpeechForge](../SpeechForge/README.md) as a speech provider. Add-on only:
+Adds ElevenLabs to [SpeechForge](https://github.com/AutomationForgeHQ/SpeechForge) as a speech provider. Add-on only:
 removing it changes nothing about SpeechForge except which providers are registered.
 
 Until 2026-09-01 this code was a folder inside the SpeechForge core, and the core's settings
@@ -47,11 +47,11 @@ to `eleven_multilingual_v2`.
 
 ## Voice Changer — speech to speech
 
-`ConvertTakeVoice` (an MCP tool, in this plugin for now) converts a recorded take's WAV master
-into a character's voice through `POST /v1/speech-to-speech/{voice_id}`, writes the result beside
-the untouched master, and imports it as a sound asset in the same call. The performance stays
-human - cadence, pauses, emphasis, emotion - and only the vocal identity changes, which is the
-whole argument for conversion over regenerating with TTS.
+This provider converts a WAV master into a character's voice through
+`POST /v1/speech-to-speech/{voice_id}`, writes the result beside the untouched master, and imports
+it as a sound asset in the same call. The performance stays human - cadence, pauses, emphasis,
+emotion - and only the vocal identity changes, which is the whole argument for conversion over
+regenerating with TTS.
 
 **Verified live 2026-09-01** on a real webcam take: a male performance converted into the Alexis
 cast voice, **4.55 s -> 4.55 s, delta +0.001 s** - timing preservation measured at one
@@ -59,8 +59,13 @@ millisecond, and the converted audio then drove the mouth layer of the take's fa
 the **Speech to Speech** permission on the key; a key without it fails as HTTP 401 naming
 `missing_permissions`, passed through verbatim.
 
-Take-level on purpose, for now. The line-level integration - a SourceSound on a speech line,
-staleness over the source hash, per-second billing in the estimator - is the designed follow-up.
+Line-level, and already shipped: `ConvertSpeechLine` on
+**[SpeechForgeToolset](https://github.com/AutomationForgeHQ/SpeechForgeToolset)** re-voices a line into its cast voice and
+makes the result the line's audio, billed by the duration of the audio rather than by character.
+Afterwards the line is stale only if its source or its voice changes - never its text, which a
+conversion does not read - and `EstimateSpeechConversionCost` prices it before anything is sent.
+A take-level twin, `ConvertSpeechTake`, does the same for a candidate on the take ledger without
+promoting it to the line.
 
 ## The key
 
@@ -75,5 +80,5 @@ three address the same vault row.
 
 ## Related
 
-- **[SpeechForge](../SpeechForge/README.md)** — the pipeline this registers with, and the place
+- **[SpeechForge](https://github.com/AutomationForgeHQ/SpeechForge)** — the pipeline this registers with, and the place
   where voices, banks, staleness and graduation are explained.

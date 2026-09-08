@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Version": 1,
-  "VersionName": "0.1.0",
+  "VersionName": "0.1.1",
   "FriendlyName": "SpeechForge ElevenLabs",
   "Description": "Adds ElevenLabs to SpeechForge as a speech provider: character-level timings on every generation, inline direction on the expressive model, and free re-fetch of past takes from the account history. Add-on only: removing it changes nothing about SpeechForge.",
   "Category": "Automation Forge",

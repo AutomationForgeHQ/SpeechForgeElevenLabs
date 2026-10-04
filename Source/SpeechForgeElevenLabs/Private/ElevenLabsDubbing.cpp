@@ -2,10 +2,12 @@
 //
 // Measured shape of the API, since the docs are thin on the mechanics:
 //
-//   POST /v1/dubbing                       multipart: file, target_lang, [source_lang], num_speakers
+//   POST /v1/dubbing                       multipart: file, target_lang, [source_lang], num_speakers,
+//                                          drop_background_audio
 //     -> { "dubbing_id": "...", "expected_duration_sec": 42.0 }
 //   GET  /v1/dubbing/{id}                  -> { "status": "dubbing" | "dubbed" | "failed", "error": ... }
 //   GET  /v1/dubbing/{id}/audio/{lang}     -> the rendered audio, MP3 for audio-only input
+//   GET  /v1/dubbing/{id}/transcript/{lang} -> what the dub says, as SRT
 //
 // Billed by the minute of source audio, at a multiple of synthesis, charged at submission.
 
@@ -37,6 +39,68 @@ namespace ElevenLabsDubbingPrivate
 		return Root;
 	}
 
+	/** The spoken lines of an SRT, joined; indices and timestamps dropped. */
+	FString TextOfSrt(const FString& Srt)
+	{
+		TArray<FString> Lines;
+		Srt.ParseIntoArrayLines(Lines);
+		TArray<FString> Spoken;
+		for (FString& Line : Lines)
+		{
+			Line.TrimStartAndEndInline();
+			if (Line.IsEmpty() || Line.Contains(TEXT("-->")) || Line.IsNumeric())
+			{
+				continue;
+			}
+			Spoken.Add(Line);
+		}
+		return FString::Join(Spoken, TEXT(" "));
+	}
+
+	/**
+	 * What the dub actually says, so nobody has to guess from listening whether the service
+	 * understood the source. The transcript is the service's own, in the target language; it lands
+	 * on the result as the alignment text and in the log. A failure here is not a failed dub - the
+	 * audio is already on disk - so it degrades to "unknown" rather than to an error.
+	 */
+	void FetchTranscript(
+		const FString& ApiKey,
+		const FString& DubbingId,
+		const FString& Language,
+		FSpeechSynthesisResult Result,
+		FOnSpeechSynthesized OnComplete)
+	{
+		const FString Url = FString::Printf(
+			TEXT("https://api.elevenlabs.io/v1/dubbing/%s/transcript/%s?format_type=srt"),
+			*DubbingId, *Language);
+
+		TSharedRef<IHttpRequest, ESPMode::ThreadSafe> Http = FHttpModule::Get().CreateRequest();
+		Http->SetURL(Url);
+		Http->SetVerb(TEXT("GET"));
+		Http->SetHeader(TEXT("xi-api-key"), ApiKey);
+		Http->SetTimeout(60.f);
+
+		Http->OnProcessRequestComplete().BindLambda(
+			[DubbingId, Language, Result, OnComplete](FHttpRequestPtr, FHttpResponsePtr Response, bool bConnected) mutable
+			{
+				if (bConnected && Response.IsValid() && Response->GetResponseCode() == 200)
+				{
+					Result.Alignment.Text = TextOfSrt(Response->GetContentAsString());
+					UE_LOG(LogSpeechForgeElevenLabs, Log, TEXT("Dub '%s' says (%s): %s"),
+						*DubbingId, *Language, *Result.Alignment.Text);
+				}
+				else
+				{
+					UE_LOG(LogSpeechForgeElevenLabs, Warning,
+						TEXT("Dub '%s' rendered, but its transcript could not be read (HTTP %d). Listen to it."),
+						*DubbingId, Response.IsValid() ? Response->GetResponseCode() : 0);
+				}
+				OnComplete(Result);
+			});
+
+		Http->ProcessRequest();
+	}
+
 	void Download(
 		const FString& ApiKey,
 		const FString& DubbingId,
@@ -54,7 +118,7 @@ namespace ElevenLabsDubbingPrivate
 		Http->SetTimeout(180.f);
 
 		Http->OnProcessRequestComplete().BindLambda(
-			[DubbingId, Request, OnComplete](FHttpRequestPtr, FHttpResponsePtr Response, bool bConnected)
+			[ApiKey, DubbingId, Request, OnComplete](FHttpRequestPtr, FHttpResponsePtr Response, bool bConnected)
 			{
 				FSpeechSynthesisResult Result;
 				Result.RequestId = DubbingId;
@@ -84,7 +148,7 @@ namespace ElevenLabsDubbingPrivate
 				Result.bSuccess = true;
 				Result.AbsoluteAudioPath = Request.AbsoluteOutputPath;
 				Result.AudioFormat = FPaths::GetExtension(Request.AbsoluteOutputPath);
-				OnComplete(Result);
+				FetchTranscript(ApiKey, DubbingId, Request.TargetLanguage, MoveTemp(Result), OnComplete);
 			});
 
 		Http->ProcessRequest();
@@ -239,6 +303,11 @@ void FElevenLabsProvider::DubSpeech(const FSpeechDubbingRequest& Request, FOnSpe
 
 	// One line, one speaker. Naming it skips the diarisation pass and its chances to be wrong.
 	AppendField(TEXT("num_speakers"), TEXT("1"));
+	// A voice line is a monologue with no soundtrack. Left on, the service separates "background"
+	// from the speech and lays it under the dub - and on a dry recording that background is a
+	// smeared copy of the original words, so two languages come out at once and it reads as
+	// gibberish. Dropping it is what the API offers for exactly this input.
+	AppendField(TEXT("drop_background_audio"), TEXT("true"));
 
 	AppendString(FString::Printf(
 		TEXT("--%s\r\nContent-Disposition: form-data; name=\"file\"; filename=\"%s\"\r\n")

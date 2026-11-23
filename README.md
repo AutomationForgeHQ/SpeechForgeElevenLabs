@@ -1,3 +1,10 @@
+<!-- kovati:header -->
+<p align="center"><a href="https://kovati.dev/tools/speechforge/"><img src="https://raw.githubusercontent.com/AutomationForgeHQ/.github/main/profile/assets/speechforge.jpg" width="100%" alt="SpeechForge, part of Kovati" /></a></p>
+
+<p align="center"><b>Provider for SpeechForge</b> · Part of <a href="https://kovati.dev"><b>Kovati</b></a>, production tools for Unreal games · <a href="https://kovati.dev/storytelling/">Storytelling</a><br />
+<a href="https://kovati.dev/tools/speechforge/">Product page</a> · <a href="https://docs.kovati.dev">Documentation</a> · <a href="https://kovati.dev/download/">Install with the Kovati Hub</a> · <a href="https://kovati.dev/discord">Discord</a></p>
+<!-- /kovati:header -->
+
 # SpeechForge ElevenLabs
 
 Adds ElevenLabs to [SpeechForge](https://github.com/AutomationForgeHQ/SpeechForge) as a speech provider. Add-on only:

@@ -8,6 +8,15 @@ not for the commit log.
 Headings are `## <x.y.z> — <date>`. Use `Added` / `Changed` / `Fixed` / `Compatibility` /
 `Known issues`, only the ones that apply.
 
+## 0.1.3 — unreleased
+
+### Added
+- Works with SpeechForge's new *Send Conversation Context* option: a line carrying the same speaker's earlier takes sends the newest three as `previous_request_ids`, and the text after the line as `next_text`.
+- `eleven_v4` and `eleven_v4_turbo` are in the character-limit table at 10,000 characters each. Before, they fell back to 5,000. To use `eleven_v4`, set it as the model on the voice profile or as the project default; it takes audio tags, stitching context and any stability value.
+
+### Compatibility
+- Needs SpeechForge 0.2.4 or later.
+
 ## 0.1.2 — 2026-10-04
 
 ### Changed

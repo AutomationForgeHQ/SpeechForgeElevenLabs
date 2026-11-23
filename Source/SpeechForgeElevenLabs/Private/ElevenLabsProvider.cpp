@@ -29,6 +29,8 @@ namespace ElevenLabs
 		// Read off the live /v1/models endpoint rather than the docs, which disagree with it.
 		static const TMap<FString, int32> Limits =
 		{
+			{ TEXT("eleven_v4"),              10000 },
+			{ TEXT("eleven_v4_turbo"),        10000 },
 			{ TEXT("eleven_v3"),              5000  },
 			{ TEXT("eleven_multilingual_v2"), 10000 },
 			{ TEXT("eleven_flash_v2_5"),      40000 },
@@ -474,7 +476,19 @@ void FElevenLabsProvider::Synthesize(const FSpeechSynthesisRequest& Request, FOn
 	{
 		Body->SetStringField(TEXT("next_text"), Request.NextText);
 	}
-	if (!Request.PreviousRequestId.IsEmpty())
+	if (Request.PreviousRequestIds.Num() > 0)
+	{
+		// The conversation-context option: the same speaker's earlier takes. The API takes three at
+		// most, and the newest are the ones worth keeping.
+		TArray<TSharedPtr<FJsonValue>> Ids;
+		const int32 First = FMath::Max(0, Request.PreviousRequestIds.Num() - 3);
+		for (int32 Index = First; Index < Request.PreviousRequestIds.Num(); ++Index)
+		{
+			Ids.Add(MakeShared<FJsonValueString>(Request.PreviousRequestIds[Index]));
+		}
+		Body->SetArrayField(TEXT("previous_request_ids"), Ids);
+	}
+	else if (!Request.PreviousRequestId.IsEmpty())
 	{
 		TArray<TSharedPtr<FJsonValue>> Ids;
 		Ids.Add(MakeShared<FJsonValueString>(Request.PreviousRequestId));
